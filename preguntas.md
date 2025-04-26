@@ -1,122 +1,120 @@
 1. ¿Qué función cumple plt.fignum_exists(self.fig.number) en el ciclo principal?
 
-plt.fignum_exists(self.fig.number) se usa en el ciclo principal para verificar si la ventana de la figura de matplotlib sigue abierta. Si la figura ha sido cerrada por el usuario, este método devuelve False y el ciclo se detiene. Esto asegura que el programa siga ejecutándose y actualizando la gráfica solo mientras la ventana de la gráfica esté activa. Si la ventana se cierra, el ciclo termina y se finaliza el monitoreo de la temperatura.
+La función plt.fignum_exists(self.fig.number) verifica si la figura identificada por self.fig.number aún existe dentro del entorno de matplotlib.
+Función en el ciclo principal: Permite condicionar la ejecución del bucle a la existencia de la ventana gráfica. Si el usuario la cierra, la función retorna False, provocando la salida controlada del ciclo de adquisición y visualización de datos.
 
 2. ¿Por qué se usa time.sleep(self.intervalo) y qué pasa si se quita?
 
-El método time.sleep(self.intervalo) se usa para pausar la ejecución del ciclo durante un tiempo específico, definido por el valor de self.intervalo. Esto permite que la lectura de la temperatura y la actualización de la gráfica no se realicen de forma continua, sino que haya un intervalo de tiempo entre cada iteración (en este caso, en segundos). Si se quita, el programa trataría de leer la temperatura y actualizar la gráfica lo más rápido posible, lo que podría hacer que el programa consuma demasiados recursos del sistema y, posiblemente, cause un sobrecarga o un comportamiento errático debido a la falta de una pausa entre las actualizaciones.
+El método time.sleep(self.intervalo) introduce una pausa de duración definida (self.intervalo, en segundos) en cada iteración del bucle principal.
+- Propósito:
+Controla la frecuencia de muestreo, evita lecturas redundantes y actualizaciones excesivas del gráfico y reduce el uso innecesario del CPU.
+- Sin esta instrucción:
+El bucle se ejecutaría de forma continua y rápida, provocando, un alto consumo de recursos del sistema, saturación de la interfaz gráfica y posible bloqueo del sistema operativo o errores por exceso de lecturas.
 
 3. ¿Qué ventaja tiene usar __init__ para inicializar listas y variables?
 
-El uso de __init__ para inicializar listas y variables dentro de la clase tiene varias ventajas. Principalmente, asegura que las variables estén configuradas correctamente cada vez que se crea una nueva instancia del objeto. Además, la inicialización en __init__ proporciona un punto centralizado donde se pueden definir los valores predeterminados para los atributos de la clase. Esto hace que el código sea más modular y reutilizable, ya que cada vez que se crea un nuevo objeto, se garantiza que comience con los mismos valores de inicialización.
+El método especial __init__ en Python es el constructor de una clase que permite establecer un estado inicial coherente del objeto, facilita la modularidad y reutilización del código, mejora la legibilidad y la mantenibilidad, al centralizar la inicialización de atributos (como listas, contadores, objetos Figure y Axes, etc.), evita errores por referencias a variables no definidas.
 
 4. ¿Qué se está midiendo con self.inicio = time.time()?
 
-self.inicio = time.time() mide el tiempo actual en segundos desde el "epoch" (el 1 de enero de 1970, 00:00:00 UTC). Este valor se usa para marcar el momento en que comienza la ejecución del monitoreo. Al restar self.inicio del tiempo actual en cada actualización, se obtiene el tiempo transcurrido desde que se inició el monitoreo. Este valor de tiempo transcurrido es lo que se utiliza para actualizar la gráfica y también para gestionar la duración de los datos que se almacenan.
+Se registra el tiempo absoluto en segundos desde "epoch" UNIX (01/01/1970) justo al inicio del programa o del proceso de monitoreo. Permite calcular el tiempo transcurrido desde ese punto de referencia, como ahora = time.time() - self.inicio, este valor de tiempo transcurrido es lo que se utiliza para actualizar.
 
 5. ¿Qué hace exactamente subprocess.check_output(...)?
 
-subprocess.check_output(...) ejecuta un comando en el sistema operativo y captura su salida estándar. En este caso, se está ejecutando el comando vcgencmd measure_temp, que obtiene la temperatura de la CPU en un Raspberry Pi. El comando se ejecuta en el sistema como si fuera un proceso de línea de comandos y la salida (el texto con la temperatura) se captura. La función devuelve esta salida como un string, que luego se procesa (con decode("utf-8") y strip()) para extraer la temperatura en formato numérico.
+Ejecuta un comando externo en una subrutina del sistema operativo y retorna su salida estándar (stdout) como una cadena de bytes.
+Ejemplo de uso típico: Leer la temperatura de un sensor desde un script o comando del sistema (e.g., cat /sys/class/thermal/...).
+Esto presenta diferentes vnetajas como: Integra scripts de shell o comandos específicos de hardware y permite mantener la portabilidad o utilizar herramientas ya existentes.
 
 6. ¿Por qué se almacena ahora = time.time() - self.inicio en lugar del tiempo absoluto?
 
-Se almacena ahora = time.time() - self.inicio para obtener el tiempo transcurrido desde el inicio del monitoreo. Si se usara el tiempo absoluto, el valor dependería del momento específico en que se ejecute el programa y no reflejaría el tiempo que ha pasado desde el comienzo del monitoreo. Al almacenar el tiempo transcurrido, podemos tener una representación consistente del tiempo en la gráfica, que siempre comienza desde cero y avanza a medida que pasa el tiempo.
+Se calcula un tiempo relativo transcurrido desde el inicio de la medición, en lugar de usar una marca de tiempo absoluta; esto mejora la interpretación de los datos, facilita la visualización de la evolución temporal en gráficos, evita valores de tiempo absolutos que podrían ser difíciles de representar gráficamente.
 
 7. ¿Por qué se usa self.ax.clear() antes de graficar?
 
-self.ax.clear() se utiliza para borrar el contenido anterior de la gráfica antes de volver a dibujarla. Dado que el programa está actualizando la gráfica en tiempo real, esta función asegura que cada vez que se grafique la nueva información, la visualización previa se elimine. Si no se hiciera esto, las nuevas líneas de la gráfica se superpondrían a las anteriores, haciendo que la visualización sea confusa y desordenada.
+El método self.ax.clear() limpia todos los elementos gráficos actuales del eje antes de dibujar nuevos datos.
+De esta forma evita la superposición de múltiples curvas o textos, asegura que cada gráfico represente únicamente los datos actuales y previene errores visuales o acumulación de elementos innecesarios.
 
 8. ¿Qué captura el bloque try...except dentro de leer_temperatura()?
 
-El bloque try...except captura posibles excepciones que podrían ocurrir al intentar ejecutar el comando vcgencmd. Por ejemplo, si el comando no está disponible o si hay problemas de permisos, el bloque except manejaría estos errores, evitando que el programa se bloquee o termine inesperadamente. En este caso, se captura cualquier error relacionado con la ejecución del comando y se muestra un mensaje de error en la consola.
+Este bloque intercepta cualquier excepción que pueda producirse al intentar leer la temperatura, típicamente mediante subprocess.check_output(...); esto identifica y registra una falla controlada y permite que el programa continúe funcionando sin detener la ejecución, identificando diferentes errores como:
+- Archivo no encontrado.
+- Sensor desconectado.
+- Error de permisos o de ejecución del comando.
 
 9. ¿Cómo podría modificar el script para guardar las temperaturas en un archivo .csv?
 
-Para guardar las temperaturas en un archivo .csv, puedes agregar código dentro del método actualizar_datos() para escribir los datos en el archivo.
+Para guardar las temperaturas en un archivo .csv, se puede incorporar una función como esta dentro de tu clase.
 
+```python
+import csv
+from datetime import datetime
+
+def guardar_csv(self, tiempo, temperatura):
+    with open("datos_temperatura.csv", mode='a', newline='') as archivo:
+        escritor = csv.writer(archivo)
+        escritor.writerow([datetime.now().isoformat(), tiempo, temperatura])
+```
+Luego realizar el llamado con:
+```python
+self.guardar_csv(ahora, temperatura)
+```
+Esto permite un registro persistente con marcas de tiempo y facilidad de análisis posterior con Excel, Python (pandas), MATLAB, etc.
 
 ```python
 import matplotlib.pyplot as plt
 import time
-import subprocess
 import csv
+import random
 
-class MonitorTemperaturaRPI:
-    def __init__(self, duracion_max=60, intervalo=0.5, archivo_salida="temperaturas.csv"):
-        self.duracion_max = duracion_max
+class MonitorTemperatura:
+    def __init__(self, intervalo=1.0):
         self.intervalo = intervalo
         self.tiempos = []
         self.temperaturas = []
         self.inicio = time.time()
-        self.archivo_salida = archivo_salida
 
-        # Inicialización de la gráfica en modo interactivo
-        plt.ion()
         self.fig, self.ax = plt.subplots()
+        self.ax.set_title("Temperatura en tiempo real")
+        self.ax.set_xlabel("Tiempo [s]")
+        self.ax.set_ylabel("Temperatura [°C]")
 
-        # Abrir el archivo CSV en modo append y escribir la cabecera si es necesario
-        with open(self.archivo_salida, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            if file.tell() == 0:  # Solo escribir cabecera si el archivo está vacío
-                writer.writerow(["Tiempo (s)", "Temperatura (°C)"])
+        with open("datos_temperatura.csv", mode='w', newline='') as archivo:
+            escritor = csv.writer(archivo)
+            escritor.writerow(["timestamp", "tiempo_s", "temperatura_C"])
 
     def leer_temperatura(self):
         try:
-            salida = subprocess.check_output(["vcgencmd", "measure_temp"]).decode("utf-8")
-            temp_str = salida.strip().replace("temp=", "").replace("'C", "")
-            return float(temp_str)
+            # Simulación, reemplaza con subprocess si lo necesitas
+            temperatura = 20 + 5 * random.random()
+            return temperatura
         except Exception as e:
-            print("Error leyendo temperatura:", e)
+            print("Error al leer temperatura:", e)
             return None
 
-    def guardar_en_csv(self, tiempo, temperatura):
-        # Guardar los datos en el archivo CSV
-        with open(self.archivo_salida, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow([tiempo, temperatura])
-
-    def actualizar_datos(self):
-        ahora = time.time() - self.inicio
-        temp = self.leer_temperatura()
-        if temp is not None:
-            self.tiempos.append(ahora)
-            self.temperaturas.append(temp)
-
-            # Guardar la nueva temperatura en el archivo CSV
-            self.guardar_en_csv(ahora, temp)
-
-            # Eliminar datos que superen el tiempo máximo
-            while self.tiempos and self.tiempos[0] < ahora - self.duracion_max:
-                self.tiempos.pop(0)
-                self.temperaturas.pop(0)
+    def guardar_csv(self, tiempo, temperatura):
+        with open("datos_temperatura.csv", mode='a', newline='') as archivo:
+            escritor = csv.writer(archivo)
+            escritor.writerow([time.strftime("%Y-%m-%d %H:%M:%S"), tiempo, temperatura])
 
     def graficar(self):
-        self.ax.clear()  # Limpiar la gráfica
-        self.ax.plot(self.tiempos, self.temperaturas, color='red')  # Graficar la temperatura
-        self.ax.set_title("Temperatura CPU Raspberry Pi")
-        self.ax.set_xlabel("Tiempo transcurrido (s)")
-        self.ax.set_ylabel("Temperatura (°C)")
-        self.ax.grid(True)
-        self.fig.canvas.draw()  # Dibujar la nueva gráfica
-        self.fig.canvas.flush_events()  # Actualizar la figura en la pantalla
+        while plt.fignum_exists(self.fig.number):
+            temperatura = self.leer_temperatura()
+            ahora = time.time() - self.inicio
 
-    def ejecutar(self):
-        try:
-            while plt.fignum_exists(self.fig.number):
-                self.actualizar_datos()  # Actualizar los datos de temperatura
-                self.graficar()  # Graficar los datos
-                time.sleep(self.intervalo)  # Esperar antes de la siguiente actualización
+            if temperatura is not None:
+                self.tiempos.append(ahora)
+                self.temperaturas.append(temperatura)
+                self.guardar_csv(ahora, temperatura)
 
-        except KeyboardInterrupt:
-            print("Monitoreo interrumpido por el usuario.")
+                self.ax.clear()
+                self.ax.plot(self.tiempos, self.temperaturas, color='blue')
+                self.ax.set_xlabel("Tiempo [s]")
+                self.ax.set_ylabel("Temperatura [°C]")
+                self.ax.set_title("Temperatura en tiempo real")
+                plt.pause(0.01)
 
-        finally:
-            print("Monitoreo finalizado.")
-            plt.ioff()  # Apagar el modo interactivo de matplotlib
-            plt.close(self.fig)  # Cerrar la figura
-
+            time.sleep(self.intervalo)
 
 if __name__ == "__main__":
-    # Crear una instancia del monitor de temperatura
-    monitor = MonitorTemperaturaRPI()
-    monitor.ejecutar()  # Ejecutar el monitoreo
+    monitor = MonitorTemperatura(intervalo=2.0)  # cada 2 segundos
+    monitor.graficar()
